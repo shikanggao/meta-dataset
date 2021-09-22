@@ -984,7 +984,11 @@ def create_imagenet_specification(split_enum,
       entry for entry in wn_ids_2012
       if tf.io.gfile.isdir(os.path.join(data_root, entry)))
   synsets_2012 = [s for s in synsets.values() if s.wn_id in wn_ids_2012]
-  assert len(wn_ids_2012) == len(synsets_2012)
+  try:
+    assert len(wn_ids_2012) == len(synsets_2012)
+  except AssertionError as e:
+    e.args += ("len(wn_ids_2012)", wn_ids_2012, "len(synsets_2012)", synsets_2012)
+    raise
 
   # Get a dict mapping each WordNet id of ILSVRC 2012 to its number of images.
   num_synset_2012_images = get_num_synset_2012_images(path_to_num_leaf_images,
