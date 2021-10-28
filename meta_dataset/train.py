@@ -55,6 +55,9 @@ from meta_dataset.models.experimental import parameter_adapter  # pylint: disabl
 import tensorflow.compat.v1 as tf
 tf.disable_eager_execution()
 
+gpus = tf.config.experimental.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(gpus[0], True)
+
 DEFAULT_SAVING_DIRECTORY = '/tmp/metadataset'
 
 tf.flags.DEFINE_string('train_checkpoint_dir',
