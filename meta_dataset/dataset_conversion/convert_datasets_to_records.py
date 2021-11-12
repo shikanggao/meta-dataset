@@ -123,6 +123,14 @@ def _dataset_name_to_converter_and_args(flags=FLAGS):
                         ConverterArgs(
                             data_root=flags.mini_imagenet_data_root,
                             long_name='MiniImageNet')),
+      # 'mvrgbd': (dataset_to_records.MVrgbdConverter,
+      #                   ConverterArgs(
+      #                       data_root=flags.mvrgbd_data_root,
+      #                       long_name='MVRGBDConverter')),
+      'mvrgbd_syn': (dataset_to_records.MVrgbdSynConverter,
+                        ConverterArgs(
+                            data_root=flags.mvrgbd_syn_data_root,
+                            long_name='Multi-view RGB-D Synthetic Dataset')),
   }
 
 
@@ -131,6 +139,7 @@ def main(argv):
 
   dataset_name_to_converter_and_args = _dataset_name_to_converter_and_args(
       flags=FLAGS)
+
   if FLAGS.dataset not in dataset_name_to_converter_and_args:
     raise NotImplementedError(
         'Dataset {} not supported. Supported datasets are {}'.format(

@@ -246,6 +246,16 @@ more context.
     -   80 tfrecords files named `[0-79].tfrecords`
     -   `dataset_spec.json` (see [note 1](#notes))
 
+# mvrgbd_syn
+
+    ```bash
+    python -m meta_dataset.dataset_conversion.convert_datasets_to_records \
+      --dataset=mvrgbd_syn \
+      --mvrgbd_syn_data_root=$DATASRC/synthetic_objects/ \
+      --splits_root=$SPLITS \
+      --records_root=$RECORDS 2>&1 | tee output.log
+    ```
+
 ## Notes
 
 1. A [reference version](

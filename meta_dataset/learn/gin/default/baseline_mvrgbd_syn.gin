@@ -1,0 +1,5 @@
+include 'meta_dataset/learn/gin/setups/mvrgbd_syn.gin'
+include 'meta_dataset/learn/gin/learners/baseline_config.gin'
+
+Learner.embedding_fn = @wide_resnet
+Trainer.learning_rate = 1e-5

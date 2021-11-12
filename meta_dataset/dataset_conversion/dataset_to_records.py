@@ -111,6 +111,16 @@ tf.flags.DEFINE_string(
     '`instances_train2017.json`. Both can be downloaded from MSCOCO website: '
     'http://cocodataset.org/#download and unzipped into the root directory.')
 
+# tf.flags.DEFINE_string(
+#     'mvrgbd_data_root',
+#     '',
+#     'Path to the root of the Multi-view RGB-D dataset.')
+
+tf.flags.DEFINE_string(
+    'mvrgbd_syn_data_root',
+    '',
+    'Path to the root of the Multi-view RGB-D Synthetic dataset.')
+
 # Diagnostics-only dataset.
 tf.flags.DEFINE_string(
     'mini_imagenet_data_root',
@@ -199,7 +209,8 @@ def write_example(data_bytes,
   writer.write(example)
 
 
-def gen_rand_split_inds(num_train_classes, num_valid_classes, num_test_classes):
+def gen_rand_split_inds(num_train_classes, num_valid_classes,
+                        num_test_classes):
   """Generates a random set of indices corresponding to dataset splits.
 
   It assumes the indices go from [0, num_classes), where the num_classes =
@@ -227,7 +238,8 @@ def gen_rand_split_inds(num_train_classes, num_valid_classes, num_test_classes):
       num_classes, num_trainval_classes, replace=False)
   test_inds = np.setdiff1d(np.arange(num_classes), trainval_inds)
   # Now further split trainval into train and val.
-  train_inds = np.random.choice(trainval_inds, num_train_classes, replace=False)
+  train_inds = np.random.choice(trainval_inds, num_train_classes,
+                                replace=False)
   valid_inds = np.setdiff1d(trainval_inds, train_inds)
 
   logging.info(
@@ -298,7 +310,8 @@ def write_tfrecord_from_image_files(class_files,
                                     invert_img=False,
                                     bboxes=None,
                                     output_format='JPEG',
-                                    skip_on_error=False):
+                                    skip_on_error=False,
+                                    image_type=None):
   """Create and write a tf.record file for the images corresponding to a class.
 
   Args:
@@ -370,6 +383,8 @@ def write_tfrecord_from_image_files(class_files,
   written_images_count = 0
   for i, path in enumerate(class_files):
     bbox = bboxes[i] if bboxes is not None else None
+    if image_type is not None and not path.endswith(image_type):
+      continue
     try:
       img = load_and_process_image(path, bbox)
     except (IOError, tf.errors.PermissionDeniedError) as e:
@@ -392,7 +407,8 @@ def write_tfrecord_from_directory(class_directory,
                                   invert_img=False,
                                   files_to_skip=None,
                                   skip_on_error=False,
-                                  shuffle_with_seed=None):
+                                  shuffle_with_seed=None,
+                                  image_type=None):
   """Create and write a tf.record file for the images corresponding to a class.
 
   Args:
@@ -434,10 +450,11 @@ def write_tfrecord_from_directory(class_directory,
       class_label,
       output_path,
       invert_img,
-      skip_on_error=skip_on_error)
+      skip_on_error=skip_on_error,
+      image_type=image_type)
 
-  if not skip_on_error:
-    assert len(class_files) == written_images_count
+  # if not skip_on_error:
+  #   assert len(class_files) == written_images_count
   return written_images_count
 
 
@@ -460,6 +477,8 @@ def encode_image(img, image_format):
   img_bytes = buf.getvalue()
   buf.close()
   return img_bytes
+
+
 class DatasetConverter(object):
   """Converts a dataset to the format required to integrate it in the benchmark.
 
@@ -1793,3 +1812,69 @@ class MiniImageNetConverter(DatasetConverter):
           buf.seek(0)
           write_example(buf.getvalue(), class_id, writer)
         writer.close()
+
+
+class MVrgbdSynConverter(DatasetConverter):
+  """Prepares Multi-view RGB-D Synthetic (MVRGBDS) dataset."""
+
+  # There are 330 classes in the Describable Textures Dataset. A
+  # 70% / 15% / 15% split between train, validation and test maps
+  # to roughly 230 / 50 / 50 classes, respectively.
+  NUM_TRAIN_CLASSES = 230
+  NUM_VALID_CLASSES = 50
+  NUM_TEST_CLASSES = 50
+
+  def create_splits(self):
+    """Create splits for DTD and store them in the default path.
+
+    If no split file is provided, and the default location for DTD splits
+    does not contain a split file, splits are randomly created in this
+    function using 70%, 15%, and 15% of the data for training, validation and
+    testing, respectively, and then stored in that default location.
+
+    Returns:
+      The splits for this dataset, represented as a dictionary mapping each of
+      'train', 'valid', and 'test' to a list of strings (class names).
+    """
+    train_inds, valid_inds, test_inds = gen_rand_split_inds(
+        self.NUM_TRAIN_CLASSES, self.NUM_VALID_CLASSES, self.NUM_TEST_CLASSES)
+    class_names = sorted(tf.io.gfile.listdir(os.path.join(self.data_root)))
+    splits = {
+      'train': [class_names[i] for i in train_inds],
+      'valid': [class_names[i] for i in valid_inds],
+      'test': [class_names[i] for i in test_inds]
+    }
+    return splits
+
+  def create_dataset_specification_and_records(self):
+    """Implements DatasetConverter.create_dataset_specification_and_records."""
+
+    splits = self.get_splits()
+    # Get the names of the classes assigned to each split.
+    train_classes = splits['train']
+    valid_classes = splits['valid']
+    test_classes = splits['test']
+
+    self.classes_per_split[learning_spec.Split.TRAIN] = len(train_classes)
+    self.classes_per_split[learning_spec.Split.VALID] = len(valid_classes)
+    self.classes_per_split[learning_spec.Split.TEST] = len(test_classes)
+
+    all_classes = list(
+        itertools.chain(train_classes, valid_classes, test_classes))
+
+    for class_id, class_name in enumerate(all_classes):
+      logging.info('Creating record for class ID %d (%s)...', class_id,
+                   class_name)
+      class_directory = os.path.join(self.data_root, class_name)
+      class_records_path = os.path.join(
+          self.records_path, self.dataset_spec.file_pattern.format(class_id))
+      self.class_names[class_id] = class_name
+      files_to_skip = set()
+      if class_name == 'waffled':
+        files_to_skip.add('.directory')
+      self.images_per_class[class_id] = write_tfrecord_from_directory(
+          class_directory,
+          class_id,
+          class_records_path,
+          files_to_skip=files_to_skip,
+          image_type="jpg")

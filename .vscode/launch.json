@@ -1,0 +1,19 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "meta_dataset/dataset_conversion/convert_datasets_to_records.py",
+      "console": "integratedTerminal",
+      "args": ["--dataset=mvrgbd_syn",
+        "--mvrgbd_syn_data_root=$DATASRC/synthetic_objects/",
+        "--splits_root=$SPLITS",
+        "--records_root=$RECORDS"]
+    }
+  ]
+}

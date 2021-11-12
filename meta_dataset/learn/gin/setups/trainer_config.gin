@@ -1,5 +1,5 @@
 Trainer.num_updates = 75000
-Trainer.batch_size = 256  # Only applicable to non-episodic models.
+Trainer.batch_size = 4  # Only applicable to non-episodic models.
 Trainer.num_eval_episodes = 600
 Trainer.checkpoint_every = 500
 Trainer.validate_every = 500
