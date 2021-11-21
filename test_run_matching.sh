@@ -1,4 +1,5 @@
-export EXPNAME=baseline_mvrgbd_syn
+# export EXPNAME=matching_mvrgbd_syn
+export EXPNAME=matching_mvrgbd_syn
 export JOBNAME=${EXPNAME}
 python -m meta_dataset.train \
 --records_root_dir=$RECORDS \
