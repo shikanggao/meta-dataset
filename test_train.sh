@@ -1,9 +1,9 @@
 export SOURCE=mvrgbd_syn
 # export EXPNAME=baseline
-export EXPNAME=maml
+# export EXPNAME=maml
 # export EXPNAME=matching
 # export EXPNAME=prototypical
-# export EXPNAME=relationnet
+export EXPNAME=relationnet
 export JOBNAME=${EXPNAME}_${SOURCE}
 
 python -m meta_dataset.train \
