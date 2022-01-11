@@ -491,7 +491,9 @@ def get_output_path(path_to_event_file):
   """
   # Get the directory where the event file was found.
   event_dir, _ = os.path.split(path_to_event_file)
-  out_pickle_path = os.path.join(event_dir, 'aggregated_summary_dicts.pklz')
+  experiment_name = path_to_event_file.split('/')[2]
+  out_pickle_path = os.path.join(event_dir,
+                                 'aggregated_summary_dicts_{}.pkl'.format(experiment_name))
   return out_pickle_path
 
 
@@ -620,7 +622,7 @@ def analyze_events(paths_to_event_files, experiment_root_dir,
   pickle_name_base = 'aggregated_summary_dicts'
   if int(FLAGS.restrict_to_subexperiment) > 0:
     pickle_name_base += '_eval_{}'.format(FLAGS.restrict_to_subexperiment)
-  output_pickle = os.path.join(experiment_root_dir, pickle_name_base + '.pklz')
+  output_pickle = os.path.join(experiment_root_dir, pickle_name_base + '.pkl')
   write_pkl(output_data, output_pickle)
 
 
