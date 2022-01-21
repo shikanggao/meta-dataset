@@ -632,6 +632,7 @@ def main(argv):
   if not paths_to_event_files:
     logging.info('No event files found.')
     return
+  print(FLAGS)
   analyze_events(paths_to_event_files, FLAGS.root_dir,
                  FLAGS.eval_finegrainedness, FLAGS.eval_imbalance,
                  FLAGS.force_recompute)
